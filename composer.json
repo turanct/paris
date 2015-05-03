@@ -1,0 +1,23 @@
+{
+    "name": "turanct/paris",
+    "description": "Simple parsing tools",
+    "type": "library",
+    "homepage": "http://github.com/turanct/paris",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Toon Daelman",
+            "email": "spinnewebber_toon@hotmail.com",
+            "homepage": "http://turanct.wordpress.com",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Paris\\": "src/Paris/"
+        },
+        "files": [
+            "src/Paris/functions.php"
+        ]
+    }
+}
