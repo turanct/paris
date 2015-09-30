@@ -197,6 +197,20 @@ function noneOf(array $characters)
     });
 }
 
+// not :: Parser String
+function not(Parser $parser)
+{
+    return satisfy(function($firstCharacter) use ($parser) {
+        $result = parse($parser, $firstCharacter);
+
+        if (isFailure($result)) {
+            return true;
+        }
+
+        return false;
+    });
+}
+
 // eol :: Parser String
 function eol()
 {
