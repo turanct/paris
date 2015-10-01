@@ -369,6 +369,32 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
+    function whitespace_parses_spaces_and_tabs()
+    {
+        $parser = whitespace();
+
+        $expected = success(' ', 'aap noot mies');
+        $this->assertEquals(
+            $expected,
+            parse($parser, ' aap noot mies')
+        );
+
+        $expected = success("\t", 'aap noot mies');
+        $this->assertEquals(
+            $expected,
+            parse($parser, "\taap noot mies")
+        );
+
+        $expected = failure('Did not match any of the given parsers');
+        $this->assertEquals(
+            $expected,
+            parse($parser, 'aap noot mies')
+        );
+    }
+
+    /**
+     * @test
+     */
     function eol_parses_an_end_of_line()
     {
         $parser = eol();

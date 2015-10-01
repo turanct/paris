@@ -215,6 +215,15 @@ function not(Parser $parser)
     });
 }
 
+// whitespace :: Parser String
+function whitespace()
+{
+    return choice(
+        character(' '),
+        character("\t")
+    );
+}
+
 // eol :: Parser String
 function eol()
 {
