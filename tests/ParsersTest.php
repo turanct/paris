@@ -66,6 +66,24 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @test
+     * @expectedException InvalidArgumentException
+     */
+    function character_throws_when_nothing_given()
+    {
+        $parser = character('');
+    }
+
+    /**
+     * @test
+     * @expectedException InvalidArgumentException
+     */
+    function character_throws_when_string_given()
+    {
+        $parser = character('aap');
+    }
+
+    /**
+     * @test
      */
     function string_succeeds_when_its_the_first_substring()
     {

@@ -2,6 +2,8 @@
 
 namespace paris;
 
+use InvalidArgumentException;
+
 // satisfy :: Parser String
 function satisfy($predicate)
 {
@@ -28,6 +30,10 @@ function character($character)
 {
     if (empty($character)) {
         throw new InvalidArgumentException('A character should be given');
+    }
+
+    if (strlen($character) > 1) {
+        throw new InvalidArgumentException('One character should be given');
     }
 
     return satisfy(function($firstCharacter) use ($character) {
