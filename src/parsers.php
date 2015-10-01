@@ -198,9 +198,7 @@ function oneOf(array $characters)
 // noneOf :: Parser String
 function noneOf(array $characters)
 {
-    return satisfy(function($firstCharacter) use ($characters) {
-        return !in_array($firstCharacter, $characters);
-    });
+    return not(oneOf($characters));
 }
 
 // not :: Parser String
