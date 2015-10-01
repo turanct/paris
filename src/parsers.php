@@ -229,7 +229,7 @@ function line()
 {
     return fmap(
         left(
-            many(not(eol())),
+            many1(not(eol())),
             optional(eol())
         ),
         'implode'
