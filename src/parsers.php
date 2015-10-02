@@ -204,14 +204,17 @@ function noneOf(array $characters)
 // not :: Parser String
 function not(Parser $parser)
 {
-    return satisfy(function($firstCharacter) use ($parser) {
-        $result = parse($parser, $firstCharacter);
+    return parser(function ($string) use ($parser) {
+        $result = parse($parser, $string);
 
         if (isFailure($result)) {
-            return true;
+            return success(
+                substr($string, 0, 1),
+                substr($string, 1)
+            );
         }
 
-        return false;
+        return failure('Parser was not supposed to match');
     });
 }
 

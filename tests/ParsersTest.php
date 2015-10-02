@@ -336,7 +336,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     function noneOf_fails_when_one_of_its_characters_can_be_parsed()
     {
         $parser = noneOf(array('f', 'a', 'z'));
-        $expected = failure('Character could not be matched');
+        $expected = failure('Parser was not supposed to match');
 
         $this->assertEquals(
             $expected,
@@ -358,7 +358,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
         );
 
         $parser = not(character('a'));
-        $expected = failure('Character could not be matched');
+        $expected = failure('Parser was not supposed to match');
 
         $this->assertEquals(
             $expected,
@@ -437,7 +437,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
             parse($parser, "aap noot\nmies")
         );
 
-        $expected = failure('Character could not be matched');
+        $expected = failure('Parser was not supposed to match');
         $this->assertEquals(
             $expected,
             parse($parser, "\naap noot mies")
