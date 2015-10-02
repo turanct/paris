@@ -291,6 +291,34 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
+    function surroundedBy_parses_surrounded_characters()
+    {
+        $parser = surroundedBy('[', ']');
+
+        $expected = success('aap', ' noot mies');
+        $this->assertEquals(
+            $expected,
+            parse($parser, '[aap] noot mies')
+        );
+
+        $parser = surroundedBy('[[', ']]');
+
+        $expected = success('aap', ' noot mies');
+        $this->assertEquals(
+            $expected,
+            parse($parser, '[[aap]] noot mies')
+        );
+
+        $expected = failure('Character could not be matched');
+        $this->assertEquals(
+            $expected,
+            parse($parser, 'aap noot mies')
+        );
+    }
+
+    /**
+     * @test
+     */
     function oneOf_parses_a_character_from_a_list_of_characters()
     {
         $parser = oneOf(array('c', 'b', 'a'));

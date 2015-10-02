@@ -187,6 +187,18 @@ function pick(Parser $left, Parser $right, $side)
     });
 }
 
+// surroundedBy :: Parser String
+function surroundedBy($start, $end)
+{
+    return fmap(
+        right(
+            string($start),
+            left(many1(not(string($end))), string($end))
+        ),
+        'implode'
+    );
+}
+
 // oneOf :: Parser String
 function oneOf(array $characters)
 {
