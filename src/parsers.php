@@ -7,22 +7,24 @@ use InvalidArgumentException;
 // satisfy :: Parser String
 function satisfy($predicate)
 {
-    return parser(function($string) use ($predicate) {
-        if (strlen($string) == 0) {
-            return failure('Unexpected end of input');
+    return parser(
+        function ($string) use ($predicate) {
+            if (strlen($string) == 0) {
+                return failure('Unexpected end of input');
+            }
+
+            $firstCharacter = substr($string, 0, 1);
+
+            if ($predicate($firstCharacter) !== true) {
+                return failure('Character could not be matched');
+            }
+
+            return success(
+                $firstCharacter,
+                substr($string, 1)
+            );
         }
-
-        $firstCharacter = substr($string, 0, 1);
-
-        if ($predicate($firstCharacter) !== true) {
-            return failure('Character could not be matched');
-        }
-
-        return success(
-            $firstCharacter,
-            substr($string, 1)
-        );
-    });
+    );
 }
 
 // character :: Parser String
@@ -36,9 +38,14 @@ function character($character)
         throw new InvalidArgumentException('One character should be given');
     }
 
-    return satisfy(function($firstCharacter) use ($character) {
-        return $firstCharacter == $character;
-    });
+    return parseOrFail(
+        satisfy(
+            function ($firstCharacter) use ($character) {
+                return $firstCharacter == $character;
+            }
+        ),
+        "Expected character '{$character}'"
+    );
 }
 
 // string :: Parser String
@@ -51,37 +58,54 @@ function string($string)
         preg_split('//u', $string, -1, PREG_SPLIT_NO_EMPTY)
     );
 
-    return call_user_func_array('paris\\sequence', $characterParsers);
+    return parseOrFail(
+        call_user_func_array('paris\\sequence', $characterParsers),
+        "Expected string '{$string}'"
+    );
 }
 
 // many :: Parser String
 function many(Parser $parser)
 {
-    return parser(function($string) use ($parser) {
-        $result = array();
-        $lastResult = true;
+    return parser(
+        function ($string) use ($parser) {
+            $result = array();
+            $lastResult = true;
 
-        while (strlen($string) > 0) {
-            $lastResult = $parser($string);
+            while (strlen($string) > 0) {
+                $lastResult = $parser($string);
 
-            if (isFailure($lastResult)) {
-                break;
+                if (isFailure($lastResult)) {
+                    break;
+                }
+
+                $string = remainingString($lastResult);
+                $result[] = unwrap($lastResult);
             }
 
-            $string = remainingString($lastResult);
-            $result[] = unwrap($lastResult);
+            return success($result, $string);
         }
-
-        return success($result, $string);
-    });
+    );
 }
 
 // many1 :: Parser String
 function many1(Parser $parser)
 {
-    return sequence(
-        fmap($parser, function($result) { return array($result); }),
-        many($parser)
+    return parser(
+        fmap(
+            sequence(
+                fmap(
+                    $parser,
+                    function ($result) {
+                        return array($result);
+                    }
+                ),
+                many($parser)
+            ),
+            function ($arrays) {
+                return call_user_func_array('array_merge', $arrays);
+            }
+        )
     );
 }
 
@@ -90,32 +114,30 @@ function sequence($parsers)
 {
     $parsers = func_get_args();
 
-    return parser(function($string) use ($parsers) {
-        foreach ($parsers as $parser) {
-            $result = $parser($string);
-            if (isFailure($result)) {
-                return $result;
+    return parser(
+        function ($string) use ($parsers) {
+            foreach ($parsers as $parser) {
+                $result = $parser($string);
+                if (isFailure($result)) {
+                    return $result;
+                }
+
+                $resultData = unwrap($result);
+                if (!isset($resultSet)) {
+                    $resultSet = array($resultData);
+                } else {
+                    $resultSet[] = $resultData;
+                }
+
+                $string = remainingString($result);
             }
 
-            $resultData = unwrap($result);
-            if (!isset($resultSet)) {
-                $resultSet = $resultData;
-            } elseif (is_array($resultSet) && is_array($resultData)) {
-                $resultSet = array_merge($resultSet, $resultData);
-            } elseif (is_array($resultSet)) {
-                $resultSet[] = $resultData;
-            } else {
-                $resultSet .= $resultData;
-            }
-
-            $string = remainingString($result);
+            return success(
+                $resultSet,
+                $string
+            );
         }
-
-        return success(
-            $resultSet,
-            $string
-        );
-    });
+    );
 }
 
 // choice :: Parser String
@@ -123,43 +145,48 @@ function choice($parsers)
 {
     $parsers = func_get_args();
 
-    return parser(function($string) use ($parsers) {
-        foreach ($parsers as $parser) {
-            $result = $parser($string);
+    return parser(
+        function ($string) use ($parsers) {
+            foreach ($parsers as $parser) {
+                // $result = $parser($string);
+                $result = call_user_func($parser, $string);
 
-            if (!isFailure($result)) {
-                return $result;
+                if (!isFailure($result)) {
+                    return $result;
+                }
             }
-        }
 
-        return failure('Did not match any of the given parsers');
-    });
+            return failure('Did not match any of the given choices');
+        }
+    );
 }
 
 // optional :: Parser String
 function optional(Parser $parser)
 {
-    return parser(function ($string) use ($parser) {
-        $result = $parser($string);
+    return parser(
+        function ($string) use ($parser) {
+            $result = $parser($string);
 
-        if (!isFailure($result)) {
-            return $result;
+            if (!isFailure($result)) {
+                return $result;
+            }
+
+            return success('', $string);
         }
-
-        return success('', $string);
-    });
+    );
 }
 
 // left :: Parser String
 function left(Parser $left, Parser $right)
 {
-    return pick($left, $right, @left);
+    return parser(pick($left, $right, @left));
 }
 
 // right :: Parser String
 function right(Parser $left, Parser $right)
 {
-    return pick($left, $right, @right);
+    return parser(pick($left, $right, @right));
 }
 
 // pick :: Parser String
@@ -169,110 +196,144 @@ function pick(Parser $left, Parser $right, $side)
         throw new InvalidArgumentException('Side should be left or right');
     }
 
-    return parser(function ($string) use ($left, $right, $side) {
-        $leftResult = $left($string);
-        if (isFailure($leftResult)) {
-            return $leftResult;
-        }
+    return parser(
+        function ($string) use ($left, $right, $side) {
+            $leftResult = $left($string);
+            if (isFailure($leftResult)) {
+                return $leftResult;
+            }
 
-        $rightResult = $right(remainingString($leftResult));
-        if (isFailure($rightResult)) {
-            return $rightResult;
-        }
+            $rightResult = $right(remainingString($leftResult));
+            if (isFailure($rightResult)) {
+                return $rightResult;
+            }
 
-        return success(
-            unwrap(${$side . 'Result'}),
-            remainingString($rightResult)
-        );
-    });
+            return success(
+                unwrap(${$side . 'Result'}),
+                remainingString($rightResult)
+            );
+        }
+    );
 }
 
 // surroundedBy :: Parser String
 function surroundedBy($start, $end)
 {
-    return fmap(
-        right(
-            string($start),
-            left(many1(not(string($end))), string($end))
-        ),
-        'implode'
+    return parser(
+        fmap(
+            right(
+                string($start),
+                left(many1(not(string($end))), string($end))
+            ),
+            'implode'
+        )
     );
 }
 
 // oneOf :: Parser String
 function oneOf(array $characters)
 {
-    return satisfy(function($firstCharacter) use ($characters) {
-        return in_array($firstCharacter, $characters);
-    });
+    return parser(
+        satisfy(
+            function ($firstCharacter) use ($characters) {
+                return in_array($firstCharacter, $characters);
+            }
+        )
+    );
 }
 
 // noneOf :: Parser String
 function noneOf(array $characters)
 {
-    return not(oneOf($characters));
+    return parser(not(oneOf($characters)));
 }
 
 // not :: Parser String
 function not(Parser $parser)
 {
-    return parser(function ($string) use ($parser) {
-        $result = parse($parser, $string);
+    return parser(
+        function ($string) use ($parser) {
+            $result = parse($parser, $string);
 
-        if (isFailure($result)) {
-            return success(
-                substr($string, 0, 1),
-                substr($string, 1)
-            );
+            if (isFailure($result)) {
+                return success(
+                    substr($string, 0, 1),
+                    substr($string, 1)
+                );
+            }
+
+            return failure('Parser was not supposed to match');
         }
-
-        return failure('Parser was not supposed to match');
-    });
+    );
 }
 
 // whitespace :: Parser String
 function whitespace()
 {
-    return choice(
-        character(' '),
-        character("\t")
+    return parser(
+        choice(
+            character(' '),
+            character("\t")
+        )
     );
 }
 
 // eol :: Parser String
 function eol()
 {
-    return choice(
-        character("\n"),
-        string("\r\n")
+    return parser(
+        choice(
+            character("\n"),
+            string("\r\n")
+        )
     );
 }
 
 // line :: Parser String
 function line()
 {
-    return fmap(
-        left(
-            many1(not(eol())),
-            optional(eol())
-        ),
-        'implode'
+    return parser(
+        fmap(
+            left(
+                many1(not(eol())),
+                optional(eol())
+            ),
+            'implode'
+        )
     );
 }
 
 // fmap :: Parser String
 function fmap(Parser $parser, $f)
 {
-    return parser(function ($string) use ($parser, $f) {
-        $result = $parser($string);
+    return parser(
+        function ($string) use ($parser, $f) {
+            $result = $parser($string);
 
-        if (!isFailure($result)) {
-            return success(
-                $f(unwrap($result)),
-                remainingString($result)
-            );
+            if (!isFailure($result)) {
+                return success(
+                    $f(unwrap($result)),
+                    remainingString($result)
+                );
+            }
+
+            return $result;
         }
+    );
+}
 
-        return $result;
-    });
+// parseOrFail :: Parser String
+function parseOrFail(Parser $parser, $message = '')
+{
+    return parser(
+        function ($string) use ($parser, $message) {
+            $result = parse($parser, $string);
+
+            if (isFailure($result)) {
+                return failure($message);
+            }
+
+            return $result;
+        }
+    );
 }
