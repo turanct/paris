@@ -2,6 +2,24 @@
 
 namespace XmlParser;
 
+use function paris\parse;
+use function paris\parser;
+use function paris\character;
+use function paris\whitespace;
+use function paris\eol;
+use function paris\sequence;
+use function paris\right;
+use function paris\left;
+use function paris\surroundedBy;
+use function paris\not;
+use function paris\many;
+use function paris\many1;
+use function paris\noneOf;
+use function paris\choice;
+use function paris\recur;
+use function paris\fmap;
+use function paris\parseOrFail;
+
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 // First, we prepare the datatypes that we'll use to represent an XML structure in memory after it's parsed:
@@ -169,8 +187,8 @@ function tag()
                 openingTag(),
                 many(
                     choice(
-                        recur('paris\\tag'),
-                        recur('paris\\text')
+                        recur('XmlParser\\tag'),
+                        recur('XmlParser\\text')
                     )
                 ),
                 closingTag()
