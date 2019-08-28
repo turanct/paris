@@ -24,7 +24,7 @@ function parser($f)
     return new Parser($f);
 }
 
-// parse :: Parser a -> String -> Result a
+// parse :: Parser a -> String -> ParseResult a
 function parse(Parser $parser, $string)
 {
     return $parser($string);
