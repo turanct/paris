@@ -303,6 +303,15 @@ function line()
     );
 }
 
+function recur($parser)
+{
+    return parser(
+        function ($string) use ($parser) {
+            return parse(call_user_func($parser), $string);
+        }
+    );
+}
+
 // fmap :: Parser String
 function fmap(Parser $parser, $f)
 {
