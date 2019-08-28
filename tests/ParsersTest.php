@@ -2,14 +2,18 @@
 
 namespace paris;
 
-class ParsersTest extends \PHPUnit_Framework_TestCase
+use PHPUnit\Framework\TestCase;
+
+class ParsersTest extends TestCase
 {
     /**
      * @test
      */
-    function satisfy_succeeds_when_string_satisfies_predicate()
+    public function satisfy_succeeds_when_string_satisfies_predicate()
     {
-        $predicate = function($string) { return $string === 'a'; };
+        $predicate = function ($string) {
+            return $string === 'a';
+        };
         $parser = satisfy($predicate);
 
         $expected = success('a', 'ap');
@@ -23,9 +27,11 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function satisfy_fails_when_string_doesnt_satisfy_predicate()
+    public function satisfy_fails_when_string_doesnt_satisfy_predicate()
     {
-        $predicate = function($string) { return $string === 'a'; };
+        $predicate = function ($string) {
+            return $string === 'a';
+        };
         $parser = satisfy($predicate);
 
         $expected = failure('Character could not be matched');
@@ -39,7 +45,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function character_succeeds_when_strings_first_char_is_its_char()
+    public function character_succeeds_when_strings_first_char_is_its_char()
     {
         $parser = character('a');
         $expected = success('a', 'ap');
@@ -53,10 +59,10 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function character_fails_when_strings_first_char_is_not_its_char()
+    public function character_fails_when_strings_first_char_is_not_its_char()
     {
         $parser = character('a');
-        $expected = failure('Character could not be matched');
+        $expected = failure('Expected character \'a\'');
 
         $this->assertEquals(
             $expected,
@@ -68,7 +74,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
      * @test
      * @expectedException InvalidArgumentException
      */
-    function character_throws_when_nothing_given()
+    public function character_throws_when_nothing_given()
     {
         $parser = character('');
     }
@@ -77,7 +83,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
      * @test
      * @expectedException InvalidArgumentException
      */
-    function character_throws_when_string_given()
+    public function character_throws_when_string_given()
     {
         $parser = character('aap');
     }
@@ -85,7 +91,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function string_succeeds_when_its_the_first_substring()
+    public function string_succeeds_when_its_the_first_substring()
     {
         $parser = string('aap');
         $expected = success('aap', ' noot mies');
@@ -99,10 +105,10 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function string_fails_when_its_not_the_first_substring()
+    public function string_fails_when_its_not_the_first_substring()
     {
         $parser = string('noot');
-        $expected = failure('Character could not be matched');
+        $expected = failure('Expected string \'noot\'');
 
         $this->assertEquals(
             $expected,
@@ -113,7 +119,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function many_parses_a_given_parser_multiple_times_until_it_fails()
+    public function many_parses_a_given_parser_multiple_times_until_it_fails()
     {
         $parser = many(character('a'));
         $expected = success(array('a', 'a'), 'p noot mies');
@@ -127,7 +133,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function many_parses_a_given_parser_zero_times_but_doesnt_fail()
+    public function many_parses_a_given_parser_zero_times_but_doesnt_fail()
     {
         $parser = many(character('p'));
         $expected = success(array(), 'aap noot mies');
@@ -141,7 +147,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function many1_parses_a_given_parser_multiple_times_until_it_fails()
+    public function many1_parses_a_given_parser_multiple_times_until_it_fails()
     {
         $parser = many1(character('a'));
         $expected = success(array('a', 'a'), 'p noot mies');
@@ -155,10 +161,10 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function many1_parses_a_given_parser_at_least_once()
+    public function many1_parses_a_given_parser_at_least_once()
     {
         $parser = many1(character('p'));
-        $expected = failure('Character could not be matched');
+        $expected = failure('Expected character \'p\'');
 
         $this->assertEquals(
             $expected,
@@ -169,10 +175,13 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function sequence_parses_a_sequence_of_parsers()
+    public function sequence_parses_a_sequence_of_parsers()
     {
         $parser = sequence(string('aap'), character(' '));
-        $expected = success('aap ', 'noot mies');
+        $expected = success(
+            array('aap', ' '),
+            'noot mies'
+        );
 
         $this->assertEquals(
             $expected,
@@ -183,10 +192,10 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function sequence_fails_when_the_sequence_cant_be_parsed()
+    public function sequence_fails_when_the_sequence_cant_be_parsed()
     {
         $parser = sequence(string('aap'), character('a'), character(' '));
-        $expected = failure('Character could not be matched');
+        $expected = failure('Expected character \'a\'');
 
         $this->assertEquals(
             $expected,
@@ -197,7 +206,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function choice_parses_the_first_matching_parser()
+    public function choice_parses_the_first_matching_parser()
     {
         $parser = choice(string('foo'), string('aa'), string('aap'));
         $expected = success('aa', 'p noot mies');
@@ -211,10 +220,10 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function choice_fails_when_all_of_its_parsers_fail()
+    public function choice_fails_when_all_of_its_parsers_fail()
     {
         $parser = choice(string('foo'), string('bar'), string('baz'));
-        $expected = failure('Did not match any of the given parsers');
+        $expected = failure('Did not match any of the given choices');
 
         $this->assertEquals(
             $expected,
@@ -225,7 +234,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function left_parses_two_parsers_and_takes_the_result_of_the_first()
+    public function left_parses_two_parsers_and_takes_the_result_of_the_first()
     {
         $parser = left(string('aap'), character(' '));
         $expected = success('aap', 'noot mies');
@@ -239,16 +248,17 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function left_fails_when_one_or_more_of_its_parsers_fail()
+    public function left_fails_when_one_or_more_of_its_parsers_fail()
     {
         $parser = left(string('aap'), character(' '));
-        $expected = failure('Character could not be matched');
 
+        $expected = failure('Expected string \'aap\'');
         $this->assertEquals(
             $expected,
             parse($parser, 'foo noot mies')
         );
 
+        $expected = failure('Expected character \' \'');
         $this->assertEquals(
             $expected,
             parse($parser, 'aapnoot mies')
@@ -258,7 +268,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function right_parses_two_parsers_and_takes_the_result_of_the_second()
+    public function right_parses_two_parsers_and_takes_the_result_of_the_second()
     {
         $parser = right(string('aap'), character(' '));
         $expected = success(' ', 'noot mies');
@@ -272,16 +282,17 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function right_fails_when_one_or_more_of_its_parsers_fail()
+    public function right_fails_when_one_or_more_of_its_parsers_fail()
     {
         $parser = right(string('aap'), character(' '));
-        $expected = failure('Character could not be matched');
 
+        $expected = failure('Expected string \'aap\'');
         $this->assertEquals(
             $expected,
             parse($parser, 'foo noot mies')
         );
 
+        $expected = failure('Expected character \' \'');
         $this->assertEquals(
             $expected,
             parse($parser, 'aapnoot mies')
@@ -291,7 +302,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function surroundedBy_parses_surrounded_characters()
+    public function surroundedBy_parses_surrounded_characters()
     {
         $parser = surroundedBy('[', ']');
 
@@ -309,7 +320,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
             parse($parser, '[[aap]] noot mies')
         );
 
-        $expected = failure('Character could not be matched');
+        $expected = failure('Expected string \'[[\'');
         $this->assertEquals(
             $expected,
             parse($parser, 'aap noot mies')
@@ -319,7 +330,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function oneOf_parses_a_character_from_a_list_of_characters()
+    public function oneOf_parses_a_character_from_a_list_of_characters()
     {
         $parser = oneOf(array('c', 'b', 'a'));
         $expected = success('a', 'ap noot mies');
@@ -333,7 +344,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function oneOf_fails_when_none_of_its_characters_can_be_parsed()
+    public function oneOf_fails_when_none_of_its_characters_can_be_parsed()
     {
         $parser = oneOf(array('f', 'b', 'z'));
         $expected = failure('Character could not be matched');
@@ -347,7 +358,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function noneOf_parses_all_characters_except_a_list_of_characters()
+    public function noneOf_parses_all_characters_except_a_list_of_characters()
     {
         $parser = noneOf(array(' ', 'p', 'f'));
         $expected = success('a', 'ap noot mies');
@@ -361,7 +372,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function noneOf_fails_when_one_of_its_characters_can_be_parsed()
+    public function noneOf_fails_when_one_of_its_characters_can_be_parsed()
     {
         $parser = noneOf(array('f', 'a', 'z'));
         $expected = failure('Parser was not supposed to match');
@@ -375,7 +386,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function not_inverts_a_given_parser()
+    public function not_inverts_a_given_parser()
     {
         $parser = not(character('p'));
         $expected = success('a', 'ap noot mies');
@@ -397,7 +408,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function whitespace_parses_spaces_and_tabs()
+    public function whitespace_parses_spaces_and_tabs()
     {
         $parser = whitespace();
 
@@ -413,7 +424,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
             parse($parser, "\taap noot mies")
         );
 
-        $expected = failure('Did not match any of the given parsers');
+        $expected = failure('Did not match any of the given choices');
         $this->assertEquals(
             $expected,
             parse($parser, 'aap noot mies')
@@ -423,7 +434,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function eol_parses_an_end_of_line()
+    public function eol_parses_an_end_of_line()
     {
         $parser = eol();
 
@@ -439,7 +450,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
             parse($parser, "\r\naap noot mies")
         );
 
-        $expected = failure('Did not match any of the given parsers');
+        $expected = failure('Did not match any of the given choices');
         $this->assertEquals(
             $expected,
             parse($parser, 'aap noot mies')
@@ -449,7 +460,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function line_parses_a_non_empty_line()
+    public function line_parses_a_non_empty_line()
     {
         $parser = line();
 
@@ -475,7 +486,7 @@ class ParsersTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    function fmap_applies_a_function_on_a_successful_parers_result()
+    public function fmap_applies_a_function_on_a_successful_parers_result()
     {
         $parser = many(character('a'));
         $fmappedParser = fmap($parser, 'implode');

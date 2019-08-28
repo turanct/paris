@@ -59,7 +59,10 @@ function string($string)
     );
 
     return parseOrFail(
-        call_user_func_array('paris\\sequence', $characterParsers),
+        fmap(
+            call_user_func_array('paris\\sequence', $characterParsers),
+            'implode'
+        ),
         "Expected string '{$string}'"
     );
 }
