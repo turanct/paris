@@ -5,6 +5,7 @@ namespace XmlParser;
 use function paris\parse;
 use function paris\parser;
 use function paris\character;
+use function paris\string;
 use function paris\whitespace;
 use function paris\eol;
 use function paris\sequence;
@@ -19,6 +20,7 @@ use function paris\choice;
 use function paris\recur;
 use function paris\fmap;
 use function paris\parseOrFail;
+use function paris\isFailure;
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
@@ -138,13 +140,13 @@ function openingTag()
     );
 }
 
-function closingTag()
+function closingTag($name)
 {
     return parseOrFail(
         right(
             many(choice(whitespace(), eol())),
             left(
-                surroundedBy('</', '>'),
+                string("</{$name}>"),
                 many(choice(whitespace(), eol()))
             )
         ),
@@ -182,25 +184,32 @@ function text()
 function tag()
 {
     return parser(
-        fmap(
-            sequence(
-                openingTag(),
+        function ($string) {
+            $openingTag = parse(openingTag(), $string);
+
+            $children = $openingTag->bind(
                 many(
                     choice(
                         recur('XmlParser\\tag'),
                         recur('XmlParser\\text')
                     )
-                ),
-                closingTag()
-            ),
-            function ($tag) {
-                return new TagNode(
-                    $tag[0]->getName(),
-                    $tag[0]->getAttributes(),
-                    $tag[1]
-                );
-            }
-        )
+                )
+            );
+
+            $tagName = !isFailure($openingTag) ? $openingTag->unWrap()->getName() : '';
+
+            $closingTag = $children->bind(closingTag($tagName));
+
+            return $closingTag->fmap(
+                function ($tag) {
+                    return new TagNode(
+                        $tag[0][0]->getName(),
+                        $tag[0][0]->getAttributes(),
+                        $tag[0][1]
+                    );
+                }
+            );
+        }
     );
 }
 
