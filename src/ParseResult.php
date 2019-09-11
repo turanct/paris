@@ -48,7 +48,7 @@ final class Success implements ParseResult
         }
 
         return new static(
-            $this->result + $newResult->unwrap(),
+            array($this->result, $newResult->unwrap()),
             $newResult->getRemainingString()
         );
     }
@@ -77,11 +77,13 @@ final class Failure implements ParseResult
     // fmap :: ParseResult a -> (a -> b) -> ParseResult b
     public function fmap($f)
     {
+        return clone $this;
     }
 
     // bind :: ParseResult a -> (a -> ParseResult b) -> ParseResult b
     public function bind($f)
     {
+        return clone $this;
     }
 }
 
